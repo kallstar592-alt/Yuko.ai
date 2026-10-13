@@ -8,7 +8,7 @@
   <title>Yuko.ai — Private AI workspace</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261013-2" />
+  <link rel="stylesheet" href="styles.css?v=20261013-3" />
 </head>
 <body>
   <div class="app-shell">
@@ -256,7 +256,15 @@
             <section class="settings-card panel"><div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">◉</div><div><h2>Voice & dictation</h2><p>Read replies aloud or dictate text using browser-supported speech.</p></div></div>
               <label class="check-row"><input type="checkbox" id="voiceOutputToggle" /><span>Automatically read assistant replies aloud</span></label><div class="field-block"><label class="field-label" for="voiceSelect">Voice</label><select id="voiceSelect" class="form-control"><option value="">System default voice</option></select></div><div class="field-block"><label class="field-label" for="voiceRate">Speaking speed</label><select id="voiceRate" class="form-control"><option value="0.8">Slow · 0.8×</option><option value="1" selected>Normal · 1×</option><option value="1.15">Quick · 1.15×</option><option value="1.3">Fast · 1.3×</option></select></div><div class="settings-save-row"><span class="save-status">Voices depend on your browser and device.</span><button type="button" class="button-secondary" id="testVoiceButton">Test voice ▶</button></div><p class="field-help">Read-aloud uses browser speech synthesis. Dictation needs microphone permission; some browsers may process audio remotely.</p>
             </section>
-            <section class="settings-card panel"><div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">⌘</div><div><h2>Yuko core prompt</h2><p>Customize the system instructions sent with AI requests.</p></div></div><label class="field-label" for="corePromptInput">System instructions</label><textarea id="corePromptInput" class="prompt-textarea core-prompt-input" rows="12" maxlength="18000" placeholder="Yuko system instructions"></textarea><p class="field-help">This is prompt guidance, not a server-enforced security policy.</p><label class="field-label separated-label" for="trustedContactsInput">Trusted contacts · local allowlist notes</label><textarea id="trustedContactsInput" class="form-control trusted-contacts-input" rows="3" maxlength="3000" placeholder="Names or handles, one per line. These are not independently verified."></textarea><label class="check-row"><input type="checkbox" id="parentalControlsToggle" /><span>Enable prompt-level parental content guardrails</span></label><p class="field-help">Stored in this browser. The app has no outbound messaging integration or verified contact database.</p></section>
+            <section class="settings-card panel parental-safety-card">
+              <div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">⬡</div><div><h2>Parental safety</h2><p>Turn the content guardrails on or off whenever you need them.</p></div></div>
+              <div class="parental-toggle-row">
+                <div class="parental-toggle-copy"><strong id="parentalSafetyLabel">Parental safety filter</strong><p>When ON, Yuko is instructed to refuse explicit sexual content, graphic violence, and age-inappropriate requests.</p></div>
+                <div class="parental-toggle-control"><span id="parentalSafetyStatus" class="safety-status is-off" aria-live="polite">OFF</span><label class="parental-switch" aria-label="Parental safety on or off"><input type="checkbox" id="parentalControlsToggle" role="switch" aria-labelledby="parentalSafetyLabel" aria-checked="false" /><span class="parental-switch-track" aria-hidden="true"></span></label></div>
+              </div>
+              <p class="field-help">The switch saves automatically in this browser. This is AI prompt guidance, not a guaranteed server-enforced safety filter.</p>
+            </section>
+            <section class="settings-card panel"><div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">⌘</div><div><h2>Yuko core prompt</h2><p>Customize the system instructions sent with AI requests.</p></div></div><label class="field-label" for="corePromptInput">System instructions</label><textarea id="corePromptInput" class="prompt-textarea core-prompt-input" rows="12" maxlength="18000" placeholder="Yuko system instructions"></textarea><p class="field-help">This is prompt guidance, not a server-enforced security policy.</p><label class="field-label separated-label" for="trustedContactsInput">Trusted contacts · local allowlist notes</label><textarea id="trustedContactsInput" class="form-control trusted-contacts-input" rows="3" maxlength="3000" placeholder="Names or handles, one per line. These are not independently verified."></textarea><p class="field-help">Trusted contacts are user-entered notes only; they are not verified, and the app cannot send messages.</p></section>
             <section class="settings-card panel">
               <div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">⬡</div><div><h2>Privacy controls</h2><p>Know what is stored, and what gets sent.</p></div></div>
               <div class="privacy-setting-row"><div><strong>Local chat history</strong><p>Store conversation text in browser local storage.</p></div><span class="setting-enabled"><span></span> On</span></div>
@@ -276,7 +284,7 @@
       <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
     </main>
   </div>
-  <script src="app.js?v=20261013-2"></script>
-  <script src="features.js?v=20261013-2"></script>
+  <script src="app.js?v=20261013-3"></script>
+  <script src="features.js?v=20261013-3"></script>
 </body>
 </html>
