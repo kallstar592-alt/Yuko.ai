@@ -6,12 +6,17 @@
     settings: 'yuko.ai.settings.v1',
     chats: 'yuko.ai.chats.v1'
   };
+  const DEFAULT_CORE_PROMPT = "# SYSTEM PROMPT: YUKO AI WORKSPACE CORE ENGINE\n## POSITION & IDENTITY\nYou are Yuko, a privacy-focused personal AI workspace. Adapt style and actions to the capabilities actually available in this browser app.\n## PERSONAL SETTINGS & PRIVACY\nWhen prompt-level parental controls are enabled, refuse explicit sexual content, graphic violence, or age-inappropriate requests with: This action is restricted by active Parental Controls. This is model guidance, not a guaranteed backend-enforced filter.\nTreat trusted contacts as a user-entered names/handles list, not verified identities. If a recipient is not listed, ask the user to add them first. Do not claim to send or share messages; the app has no outbound messaging integration.\nUse the current conversation and explicitly provided context only. Do not infer access to other or archived conversations; only use archived material when the user explicitly provides or requests it.\n## INTEGRATIONS & CODE\nUse only integrations that are actually configured and exposed. Never invent tool calls, execution results, tests, repository changes, or successful actions. Never include API keys or credentials in tool payloads or generated examples.\nThis static browser app can call the selected Ollama or OpenRouter provider and prepare downloadable project files. It has no cloud computer sandbox and does not execute arbitrary generated code. Do not claim code was run, built, or tested unless a real execution tool verifies that.\nWhen debugging, optimizing, or reviewing code, cover Security Vulnerabilities (injection, leaked variables, hardcoded keys, race conditions); Performance (bottlenecks, memory leaks, unoptimized loops); and Syntax & Style (formatting, types, logical structure).\nFor complete project requests, provide a coherent file tree, full source files, configuration, dependencies, README, setup and validation steps. Avoid placeholders for requested core mechanics and never embed secrets. State when anything could not be verified.\nAgent mode should provide a concise high-level plan, complete the requested work, and review the result. Do not disclose hidden chain-of-thought; share useful decisions, concise plans, and checklists.\n## VOICE & DICTATION\nRead-aloud should use natural prose with Markdown/tables converted where practical, usually no more than three sentences unless detailed technical dictation is requested.\nCorrect obvious speech-to-text errors, filler, and stutters while preserving intent. Browser speech recognition may process audio remotely depending on the browser/device. Voice options and whether they run locally depend on the device.\n## OUTPUT STYLE\nGive the direct answer or action result first. Use clear, scannable headings; avoid needless preambles or fabricated claims.\n## CAPABILITY BOUNDARIES\nChats and settings are stored in this browser, not on a Yuko server. Prompts and attachments are sent to the selected provider only when submitted. Browser storage may be readable by scripts or extensions on this origin. There is no Yuko-owned backend, account system, remote execution sandbox, verified-contact database, or outbound messaging integration. Image/video generation needs a compatible model and may cost money. Never promise absolute privacy or free generation without provider terms confirming it.";
+
   const DEFAULTS = {
     provider: 'ollama',
     ollamaEndpoint: 'http://localhost:11434',
     ollamaModel: 'llama3.2',
     openRouterKey: '',
-    openRouterModel: 'openrouter/free'
+    openRouterModel: 'openrouter/free',
+    corePrompt: DEFAULT_CORE_PROMPT,
+    trustedContacts: '',
+    parentalControls: false
   };
   const MAX_FILE_BYTES = 10 * 1024 * 1024;
   const MAX_TEXT_FILE_BYTES = 1024 * 1024;
@@ -218,6 +223,9 @@
     $('ollamaDefaultModel').value = state.settings.ollamaModel || DEFAULTS.ollamaModel;
     $('openRouterKey').value = state.settings.openRouterKey || '';
     $('openRouterDefaultModel').value = state.settings.openRouterModel || DEFAULTS.openRouterModel;
+    $('corePromptInput').value = state.settings.corePrompt || DEFAULT_CORE_PROMPT;
+    $('trustedContactsInput').value = state.settings.trustedContacts || '';
+    $('parentalControlsToggle').checked = Boolean(state.settings.parentalControls);
     applyProviderUI();
   }
 
@@ -227,16 +235,21 @@
     state.settings.ollamaModel = $('ollamaDefaultModel').value || DEFAULTS.ollamaModel;
     state.settings.openRouterKey = $('openRouterKey').value.trim();
     state.settings.openRouterModel = $('openRouterDefaultModel').value || DEFAULTS.openRouterModel;
+    state.settings.corePrompt = $('corePromptInput').value.trim() || DEFAULT_CORE_PROMPT;
+    state.settings.trustedContacts = $('trustedContactsInput').value.trim();
+    state.settings.parentalControls = $('parentalControlsToggle').checked;
     persistSettings();
     applyProviderUI();
   }
 
+
   function navigate(page) {
-    const pages = { chat: 'Chat', images: 'Image studio', settings: 'Settings' };
+    const pages = { chat: 'Chat', agent: 'Agent', codebase: 'Codebase', images: 'Image studio', settings: 'Settings' };
     for (const name of Object.keys(pages)) {
       const active = name === page;
-      $(`${name === 'chat' ? 'chat' : name === 'images' ? 'images' : 'settings'}View`).hidden = !active;
-      const nav = document.querySelector(`[data-nav="${name}"]`);
+      const view = $(name + 'View');
+      if (view) view.hidden = !active;
+      const nav = document.querySelector('[data-nav="' + name + '"]');
       if (nav) nav.classList.toggle('active', active);
     }
     $('pageTitle').textContent = pages[page] || 'Chat';
@@ -530,6 +543,8 @@
       chat.updatedAt = Date.now();
       persistChats();
       setConnection('connected', 'Connected');
+      const voicePrefs = loadJSON('yuko.ai.voice.v1', {});
+      if (voicePrefs.autoRead) window.dispatchEvent(new CustomEvent('yuko:speak', { detail: reply }));
     } catch (error) {
       const friendly = readableProviderError(error);
       chat.messages.push({ id: makeId(), role: 'assistant', content: `**I couldn’t complete that request.**\n\n${friendly}`, createdAt: Date.now(), isError: true });
@@ -550,36 +565,36 @@
     return message;
   }
 
+
   async function getProviderCompletion(chatMessages, model, ephemeralPrompt = null) {
     const provider = currentProvider();
+    const contacts = String(state.settings.trustedContacts || '').trim();
+    const guard = state.settings.parentalControls ? '\n\nPrompt-level parental controls are enabled. For restricted content reply: This action is restricted by active Parental Controls.' : '';
+    const contactsNote = contacts ? '\n\nUser-entered trusted contacts (not independently verified):\n' + contacts + '\nThis app has no outbound messaging integration; do not claim to contact anyone.' : '\n\nNo trusted contacts are configured.';
+    const systemMessage = { role: 'system', content: String(state.settings.corePrompt || DEFAULT_CORE_PROMPT) + guard + contactsNote + '\n\nCapability limit: there is no remote execution sandbox. Do not claim generated code was run or tested.' };
     if (provider === 'ollama') {
-      const messages = chatMessages.map((msg, index) => {
+      const mapped = chatMessages.map((msg, index) => {
         const images = msg.role === 'user' && index === chatMessages.length - 1 ? (msg.attachmentPayloads || []).map((image) => image.base64) : undefined;
-        return { role: msg.role, content: msg.content, ...(images?.length ? { images } : {}) };
+        return { role: msg.role, content: msg.content, ...(images && images.length ? { images: images } : {}) };
       });
+      const messages = [systemMessage, ...mapped];
       if (ephemeralPrompt !== null) messages.push({ role: 'user', content: ephemeralPrompt });
-      const data = await fetchJSON(`${endpointBase()}/api/chat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages, stream: false, options: { temperature: 0.7 } })
-      });
+      const data = await fetchJSON(endpointBase() + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: model, messages: messages, stream: false, options: { temperature: 0.7 } }) });
       return data.message?.content || data.response || '';
     }
-
     const key = state.settings.openRouterKey.trim();
     if (!key) throw new Error('Add your OpenRouter API key in Settings first.');
-    const messages = chatMessages.map((msg, index) => {
-      if (msg.role === 'user' && index === chatMessages.length - 1 && msg.attachmentPayloads?.length) {
+    const mapped = chatMessages.map((msg, index) => {
+      if (msg.role === 'user' && index === chatMessages.length - 1 && msg.attachmentPayloads && msg.attachmentPayloads.length) {
         const parts = [{ type: 'text', text: msg.content }];
         for (const image of msg.attachmentPayloads) parts.push({ type: 'image_url', image_url: { url: image.dataUrl } });
         return { role: msg.role, content: parts };
       }
       return { role: msg.role, content: msg.content };
     });
+    const messages = [systemMessage, ...mapped];
     if (ephemeralPrompt !== null) messages.push({ role: 'user', content: ephemeralPrompt });
-    const data = await fetchJSON('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 3000 })
-    });
+    const data = await fetchJSON('https://openrouter.ai/api/v1/chat/completions', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ model: model, messages: messages, temperature: 0.7, max_tokens: 3000 }) });
     return data.choices?.[0]?.message?.content || '';
   }
 
@@ -865,7 +880,9 @@
     const payload = {
       product: 'Yuko.ai', exportedAt: new Date().toISOString(),
       settings: { ...state.settings, openRouterKey: state.settings.openRouterKey ? '[OMITTED — export for safety]' : '' },
-      chats: state.chats
+      chats: state.chats,
+      agentHistory: loadJSON('yuko.ai.agent.v1', []),
+      codeProjects: loadJSON('yuko.ai.codebase.v1', [])
     };
     downloadBlob('yuko-ai-local-data.json', JSON.stringify(payload, null, 2));
     toast('Exported local chats and settings. The API key was omitted.');
@@ -875,6 +892,9 @@
     if (!window.confirm('Delete all saved Yuko.ai chats, settings, and the OpenRouter key from this browser? This cannot be undone.')) return;
     localStorage.removeItem(KEYS.chats);
     localStorage.removeItem(KEYS.settings);
+    localStorage.removeItem('yuko.ai.agent.v1');
+    localStorage.removeItem('yuko.ai.codebase.v1');
+    localStorage.removeItem('yuko.ai.voice.v1');
     state.chats = [];
     state.activeChatId = null;
     state.currentDraft = null;

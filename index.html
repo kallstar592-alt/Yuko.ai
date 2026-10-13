@@ -27,6 +27,8 @@
       <div class="nav-section-label">WORKSPACE</div>
       <nav class="primary-nav">
         <button class="nav-item active" data-nav="chat"><span class="nav-icon">◌</span><span>Chat</span></button>
+        <button class="nav-item" data-nav="agent"><span class="nav-icon">✧</span><span>Agent</span><span class="nav-badge">BETA</span></button>
+        <button class="nav-item" data-nav="codebase"><span class="nav-icon">⌘</span><span>Codebase</span><span class="nav-badge">NEW</span></button>
         <button class="nav-item" data-nav="images"><span class="nav-icon image-nav-icon">▧</span><span>Image studio</span><span class="nav-badge">NEW</span></button>
         <button class="nav-item" data-nav="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
       </nav>
@@ -102,7 +104,7 @@
                 <label class="attach-button" for="chatFileInput" title="Attach images or text files"><span>＋</span><span>Attach</span></label>
                 <input id="chatFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,text/plain,text/markdown,text/csv,application/json,text/javascript,text/css" multiple hidden />
                 <span class="composer-divider"></span>
-                <button type="button" class="composer-tool" id="improvePromptButton" title="Ask your selected model to refine your draft">✧ <span>Improve prompt</span></button>
+                <button type="button" class="composer-tool" id="improvePromptButton" title="Ask your selected model to refine your draft">✧ <span>Improve prompt</span></button><button type="button" class="composer-tool mic-tool" id="chatMicButton" title="Dictate a message">◉ <span>Voice input</span></button>
               </div>
               <div class="composer-end"><span class="enter-hint">Enter to send · Shift + Enter for a new line</span><button class="send-button" id="sendButton" type="submit" aria-label="Send message"><span>↑</span></button></div>
             </div>
@@ -124,7 +126,7 @@
               <div class="panel-heading"><div><span class="panel-kicker">01 / PROMPT</span><h2>Describe your image</h2></div><span class="panel-heading-symbol">✧</span></div>
               <label class="field-label" for="imagePrompt">Visual prompt <span class="required-dot">*</span></label>
               <textarea id="imagePrompt" class="prompt-textarea" rows="5" maxlength="6000" placeholder="A quiet futuristic greenhouse at blue hour, bioluminescent plants, cinematic fog…" required></textarea>
-              <div class="prompt-footer"><span>Be specific about subject, mood, light, and composition.</span><button class="text-button" type="button" id="refineImagePromptButton">✧ Refine with AI</button></div>
+              <div class="prompt-footer"><span>Be specific about subject, mood, light, and composition.</span><div class="inline-tools"><button class="text-button mic-tool" type="button" id="imageMicButton">◉ Dictate</button><button class="text-button" type="button" id="refineImagePromptButton">✧ Refine with AI</button></div></div>
 
               <div class="field-block">
                 <div class="field-title-row"><label class="field-label">Style tags</label><span class="optional-label">OPTIONAL</span></div>
@@ -187,6 +189,40 @@
         </div>
       </section>
 
+
+      <section class="view feature-view" id="agentView" aria-label="Agent" hidden>
+        <div class="feature-page">
+          <div class="feature-page-heading"><div class="feature-heading-icon">✧</div><div><p class="eyebrow">YUKO AGENT</p><h1>From idea to <span>done.</span></h1><p>Multi-pass planning and task completion, plus optional image and video generation through supported providers.</p></div></div>
+          <div class="feature-grid">
+            <form class="feature-form panel" id="agentForm">
+              <div class="panel-heading"><div><span class="panel-kicker">01 / TASK</span><h2>What should Yuko do?</h2></div><span class="panel-heading-symbol">✧</span></div>
+              <label class="field-label" for="agentMode">Agent mode</label><select id="agentMode" class="form-control"><option value="think">Think & execute · multi-pass</option><option value="image">Generate an image</option><option value="video">Generate a video</option></select>
+              <label class="field-label separated-label" for="agentPrompt">Task or idea <span class="required-dot">*</span></label><textarea id="agentPrompt" class="prompt-textarea" rows="7" maxlength="12000" placeholder="Describe the goal, constraints, and what success should include…" required></textarea>
+              <div class="prompt-footer"><span>Uses the selected AI provider. This page does not run code on a remote computer.</span><button type="button" class="text-button mic-tool" id="agentMicButton">◉ Dictate</button></div>
+              <div id="agentImageOptions" class="field-block" hidden><label class="field-label" for="agentImageModel">Image model</label><select id="agentImageModel" class="form-control"><option value="bytedance-seed/seedream-4.5">bytedance-seed/seedream-4.5</option></select><div class="settings-two-col field-block"><div><label class="field-label" for="agentImageRatio">Aspect ratio</label><select id="agentImageRatio" class="form-control"><option value="1:1">Square · 1:1</option><option value="16:9">Landscape · 16:9</option><option value="9:16">Portrait · 9:16</option><option value="4:3">Classic · 4:3</option></select></div><div><label class="field-label" for="agentImageResolution">Resolution</label><select id="agentImageResolution" class="form-control"><option value="1K">1K</option><option value="2K">2K if supported</option><option value="4K">4K if supported</option></select></div></div></div>
+              <div id="agentVideoOptions" class="field-block" hidden><div class="field-title-row"><label class="field-label" for="agentVideoModel">Video model</label><button class="text-button" type="button" id="refreshVideoModels">↻ Load models</button></div><select id="agentVideoModel" class="form-control"><option value="google/veo-3.1">Google: Veo 3.1</option></select><div class="settings-two-col field-block"><div><label class="field-label" for="agentVideoDuration">Duration</label><select id="agentVideoDuration" class="form-control"><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="10">10 seconds</option></select></div><div><label class="field-label" for="agentVideoResolution">Resolution</label><select id="agentVideoResolution" class="form-control"><option value="720p">720p</option><option value="1080p">1080p</option></select></div></div><label class="field-label separated-label" for="agentVideoRatio">Aspect ratio</label><select id="agentVideoRatio" class="form-control"><option value="16:9">Widescreen · 16:9</option><option value="9:16">Vertical · 9:16</option><option value="1:1">Square · 1:1</option></select><label class="check-row"><input type="checkbox" id="agentGenerateAudio" checked /><span>Generate audio when supported</span></label><p class="field-help">Video jobs may take several minutes and can incur provider charges. Check pricing first.</p></div>
+              <button class="generate-button feature-submit" id="agentRunButton" type="submit"><span>✧</span> Run agent <span class="generate-arrow">↗</span></button><p class="field-help">Text mode uses plan and completion/review passes. Media modes require OpenRouter and a compatible model.</p>
+            </form>
+            <section class="feature-output panel" aria-label="Agent results"><div class="panel-heading"><div><span class="panel-kicker">02 / SESSION</span><h2>Agent workspace</h2></div><button type="button" class="text-button" id="clearAgentHistory">Clear</button></div><div class="agent-status" id="agentStatus" role="status" hidden></div><div class="agent-history" id="agentHistory"><div class="feature-empty"><span>✧</span><strong>Your task results will appear here.</strong><small>Plan projects, review code, or create visuals.</small></div></div><div class="agent-media" id="agentMedia" hidden></div></section>
+          </div>
+        </div>
+      </section>
+      <section class="view feature-view" id="codebaseView" aria-label="Codebase" hidden>
+        <div class="feature-page">
+          <div class="feature-page-heading"><div class="feature-heading-icon">⌘</div><div><p class="eyebrow">YUKO CODEBASE</p><h1>Build the whole <span>thing.</span></h1><p>Generate a multi-file project, inspect each file, and download a ZIP for your editor or game engine.</p></div></div>
+          <div class="feature-grid codebase-grid">
+            <form class="feature-form panel" id="codebaseForm">
+              <div class="panel-heading"><div><span class="panel-kicker">01 / PROJECT SPEC</span><h2>Describe your project</h2></div><span class="panel-heading-symbol">⌘</span></div>
+              <label class="field-label" for="codebaseProjectName">Project name</label><input id="codebaseProjectName" class="form-control" maxlength="80" value="Yuko Project" placeholder="My game or app" />
+              <label class="field-label separated-label" for="codebaseStack">Target stack / engine</label><select id="codebaseStack" class="form-control"><option value="Web app (HTML, CSS, JavaScript)">Web app · HTML/CSS/JavaScript</option><option value="React + Vite">React + Vite</option><option value="Python">Python</option><option value="Godot 4 (GDScript)">Godot 4 · GDScript</option><option value="Unity (C#)">Unity · C#</option><option value="Roblox Studio (Luau)">Roblox Studio · Luau</option><option value="Node.js">Node.js</option><option value="Custom / multi-language">Custom / multi-language</option></select>
+              <label class="field-label separated-label" for="codebasePrompt">Project requirements <span class="required-dot">*</span></label><textarea id="codebasePrompt" class="prompt-textarea" rows="9" maxlength="16000" placeholder="Describe all features, mechanics, screens, controls, animations, edge cases, and definition of done…" required></textarea>
+              <div class="prompt-footer"><span>Specific requirements produce more complete file trees.</span><button type="button" class="text-button mic-tool" id="codebaseMicButton">◉ Dictate</button></div><label class="check-row"><input type="checkbox" id="codebaseIncludeTests" checked /><span>Include tests and validation steps</span></label>
+              <button type="submit" class="generate-button feature-submit" id="generateCodebaseButton"><span>⌘</span> Generate project files <span class="generate-arrow">↗</span></button><p class="field-help">The browser prepares files and ZIP downloads; it does not compile or execute generated code.</p>
+            </form>
+            <section class="feature-output panel" aria-label="Generated codebase"><div class="panel-heading"><div><span class="panel-kicker">02 / FILE EXPLORER</span><h2 id="codebaseResultTitle">Generated files</h2></div><button class="button-secondary" type="button" id="downloadCodebaseZip" disabled>Download ZIP ↓</button></div><div class="codebase-status" id="codebaseStatus" role="status">Your generated project will appear here.</div><div class="codebase-explorer"><div class="codebase-file-list" id="codebaseFileList"><div class="feature-empty"><span>⌘</span><strong>No project yet</strong><small>Your generated files will be listed here.</small></div></div><div class="codebase-preview-wrap"><div class="codebase-preview-header"><span id="codebaseSelectedFile">Select a file</span><button type="button" class="text-button" id="downloadCodebaseFile" disabled>Download file</button></div><pre class="codebase-preview" id="codebasePreview">Your source code preview will show here.</pre></div></div><div class="saved-projects"><div class="field-title-row"><strong>Recent projects</strong><button class="text-button" type="button" id="clearCodebaseHistory">Clear history</button></div><div id="codebaseProjectHistory" class="project-history"></div></div></section>
+          </div>
+        </div>
+      </section>
       <section class="view settings-view" id="settingsView" aria-label="Settings" hidden>
         <div class="settings-page-heading"><div class="settings-icon">⚙</div><div><p class="eyebrow">YOUR WORKSPACE</p><h1>Settings & <span>privacy</span></h1><p>Choose where your AI requests go. Yuko has no backend of its own.</p></div></div>
         <div class="settings-layout">
@@ -216,6 +252,11 @@
               <div class="settings-save-row"><span class="save-status" id="saveStatus">Changes save in this browser.</span><button type="button" class="button-primary" id="saveSettingsButton">Save settings <span>→</span></button></div>
             </section>
 
+
+            <section class="settings-card panel"><div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">◉</div><div><h2>Voice & dictation</h2><p>Read replies aloud or dictate text using browser-supported speech.</p></div></div>
+              <label class="check-row"><input type="checkbox" id="voiceOutputToggle" /><span>Automatically read assistant replies aloud</span></label><div class="field-block"><label class="field-label" for="voiceSelect">Voice</label><select id="voiceSelect" class="form-control"><option value="">System default voice</option></select></div><div class="field-block"><label class="field-label" for="voiceRate">Speaking speed</label><select id="voiceRate" class="form-control"><option value="0.8">Slow · 0.8×</option><option value="1" selected>Normal · 1×</option><option value="1.15">Quick · 1.15×</option><option value="1.3">Fast · 1.3×</option></select></div><div class="settings-save-row"><span class="save-status">Voices depend on your browser and device.</span><button type="button" class="button-secondary" id="testVoiceButton">Test voice ▶</button></div><p class="field-help">Read-aloud uses browser speech synthesis. Dictation needs microphone permission; some browsers may process audio remotely.</p>
+            </section>
+            <section class="settings-card panel"><div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">⌘</div><div><h2>Yuko core prompt</h2><p>Customize the system instructions sent with AI requests.</p></div></div><label class="field-label" for="corePromptInput">System instructions</label><textarea id="corePromptInput" class="prompt-textarea core-prompt-input" rows="12" maxlength="18000" placeholder="Yuko system instructions"></textarea><p class="field-help">This is prompt guidance, not a server-enforced security policy.</p><label class="field-label separated-label" for="trustedContactsInput">Trusted contacts · local allowlist notes</label><textarea id="trustedContactsInput" class="form-control trusted-contacts-input" rows="3" maxlength="3000" placeholder="Names or handles, one per line. These are not independently verified."></textarea><label class="check-row"><input type="checkbox" id="parentalControlsToggle" /><span>Enable prompt-level parental content guardrails</span></label><p class="field-help">Stored in this browser. The app has no outbound messaging integration or verified contact database.</p></section>
             <section class="settings-card panel">
               <div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">⬡</div><div><h2>Privacy controls</h2><p>Know what is stored, and what gets sent.</p></div></div>
               <div class="privacy-setting-row"><div><strong>Local chat history</strong><p>Store conversation text in browser local storage.</p></div><span class="setting-enabled"><span></span> On</span></div>
@@ -236,5 +277,6 @@
     </main>
   </div>
   <script src="app.js"></script>
+  <script src="features.js"></script>
 </body>
 </html>
