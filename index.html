@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0c10" />
+  <meta name="description" content="Yuko.ai — a privacy-first AI workspace for chat, image creation, and file enhancement." />
+  <title>Yuko.ai — Private AI workspace</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="mobile-scrim" id="mobileScrim"></div>
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="brand-row">
+        <a class="brand" href="#" aria-label="Yuko.ai home" data-nav="chat">
+          <span class="brand-mark"><span></span><span></span><span></span></span>
+          <span>Yuko<span class="brand-dot">.</span>ai</span>
+        </a>
+        <button class="icon-button sidebar-collapse" id="closeSidebar" aria-label="Close navigation" title="Close navigation">×</button>
+      </div>
+
+      <button class="new-chat-button" id="newChatButton"><span class="plus-icon">＋</span><span>New chat</span><kbd>⌘ K</kbd></button>
+
+      <div class="nav-section-label">WORKSPACE</div>
+      <nav class="primary-nav">
+        <button class="nav-item active" data-nav="chat"><span class="nav-icon">◌</span><span>Chat</span></button>
+        <button class="nav-item" data-nav="images"><span class="nav-icon image-nav-icon">▧</span><span>Image studio</span><span class="nav-badge">NEW</span></button>
+        <button class="nav-item" data-nav="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
+      </nav>
+
+      <div class="history-header">
+        <span class="nav-section-label">RECENTS</span>
+        <button class="subtle-icon-button" id="clearHistoryButton" aria-label="Clear all chat history" title="Clear chat history">⌫</button>
+      </div>
+      <div class="history-list" id="historyList" aria-label="Saved conversations"></div>
+      <div class="sidebar-spacer"></div>
+      <div class="privacy-card">
+        <div class="privacy-orb"><span></span></div>
+        <div class="privacy-copy"><strong>Your space, your data.</strong><span>Chats stay in this browser.</span></div>
+        <span class="privacy-check">✓</span>
+      </div>
+      <div class="sidebar-footer">
+        <span class="status-light"></span><span id="providerStatusText">Local-first mode</span>
+        <button class="subtle-icon-button" id="sidebarSettingsShortcut" aria-label="Open settings" title="Settings">⚙</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button menu-button" id="openSidebar" aria-label="Open navigation">☰</button>
+          <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-slash">/</span><strong id="pageTitle">Chat</strong></div>
+        </div>
+        <div class="topbar-right">
+          <div class="connection-pill" id="connectionPill"><span class="connection-dot"></span><span id="connectionLabel">Not connected</span></div>
+          <button class="avatar-button" id="settingsAvatar" aria-label="Open settings">Y</button>
+        </div>
+      </header>
+
+      <section class="view active-view" id="chatView" aria-label="Chat">
+        <div class="chat-toolbar">
+          <div class="model-control-wrap">
+            <span class="provider-icon" id="modelProviderIcon">✳</span>
+            <label class="sr-only" for="chatModelSelect">Model</label>
+            <select id="chatModelSelect" class="model-select" aria-label="Select chat model">
+              <option value="llama3.2">llama3.2</option>
+            </select>
+            <span class="model-provider-label" id="modelProviderLabel">Ollama</span>
+          </div>
+          <div class="chat-tools">
+            <span class="local-chip"><span>●</span> Local history</span>
+            <button class="icon-button small" id="exportChatButton" aria-label="Export current chat" title="Export chat">⇩</button>
+          </div>
+        </div>
+
+        <div class="conversation-scroll" id="conversationScroll">
+          <div class="welcome-state" id="welcomeState">
+            <div class="welcome-sparkle">✳</div>
+            <p class="eyebrow">YOUR PRIVATE AI WORKSPACE</p>
+            <h1>What’s on your <span>mind?</span></h1>
+            <p class="welcome-description">A little space to think, create, and figure things out.<br class="desktop-only" /> Choose a model. Keep control of your data.</p>
+            <div class="suggestion-grid">
+              <button class="suggestion-card" data-prompt="Help me turn an idea into a clear, step-by-step plan."><span class="suggestion-symbol violet">✦</span><span><strong>Build an idea</strong><small>Turn a thought into a plan</small></span><span class="suggestion-arrow">↗</span></button>
+              <button class="suggestion-card" data-prompt="Explain a difficult topic simply, with an example and a short summary."><span class="suggestion-symbol blue">◈</span><span><strong>Learn something</strong><small>Make a complex topic click</small></span><span class="suggestion-arrow">↗</span></button>
+              <button class="suggestion-card" data-prompt="Help me debug or improve this code. Explain the reasoning and give me a clean solution."><span class="suggestion-symbol amber">⌘</span><span><strong>Write or code</strong><small>Get a useful second brain</small></span><span class="suggestion-arrow">↗</span></button>
+              <button class="suggestion-card" data-prompt="Help me brainstorm five original visual concepts with distinct moods and art direction."><span class="suggestion-symbol pink">▧</span><span><strong>Create a visual</strong><small>Explore a creative direction</small></span><span class="suggestion-arrow">↗</span></button>
+            </div>
+            <div class="welcome-footnote"><span class="tiny-shield">⬡</span> No account. No tracking. Your browser stores your history.</div>
+          </div>
+          <div class="messages" id="messages" aria-live="polite"></div>
+        </div>
+
+        <div class="composer-area">
+          <div class="attachment-strip" id="attachmentStrip" hidden></div>
+          <form class="composer" id="chatForm">
+            <textarea id="chatInput" rows="1" placeholder="Message Yuko…" aria-label="Message Yuko" maxlength="30000"></textarea>
+            <div class="composer-bottom">
+              <div class="composer-actions">
+                <label class="attach-button" for="chatFileInput" title="Attach images or text files"><span>＋</span><span>Attach</span></label>
+                <input id="chatFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,text/plain,text/markdown,text/csv,application/json,text/javascript,text/css" multiple hidden />
+                <span class="composer-divider"></span>
+                <button type="button" class="composer-tool" id="improvePromptButton" title="Ask your selected model to refine your draft">✧ <span>Improve prompt</span></button>
+              </div>
+              <div class="composer-end"><span class="enter-hint">Enter to send · Shift + Enter for a new line</span><button class="send-button" id="sendButton" type="submit" aria-label="Send message"><span>↑</span></button></div>
+            </div>
+          </form>
+          <p class="composer-disclaimer">AI can make mistakes. Only send content you’re comfortable sharing with your selected endpoint.</p>
+        </div>
+      </section>
+
+      <section class="view image-view" id="imagesView" aria-label="Image studio" hidden>
+        <div class="studio-layout">
+          <div class="studio-intro">
+            <div class="studio-heading-icon">▧</div>
+            <p class="eyebrow">YUKO CREATIVE</p>
+            <h1>Bring an idea <span>to life.</span></h1>
+            <p>Describe what you imagine. Shape the canvas, add a style, or use a reference image to guide a variation.</p>
+          </div>
+          <div class="studio-grid">
+            <form class="studio-form panel" id="imageForm">
+              <div class="panel-heading"><div><span class="panel-kicker">01 / PROMPT</span><h2>Describe your image</h2></div><span class="panel-heading-symbol">✧</span></div>
+              <label class="field-label" for="imagePrompt">Visual prompt <span class="required-dot">*</span></label>
+              <textarea id="imagePrompt" class="prompt-textarea" rows="5" maxlength="6000" placeholder="A quiet futuristic greenhouse at blue hour, bioluminescent plants, cinematic fog…" required></textarea>
+              <div class="prompt-footer"><span>Be specific about subject, mood, light, and composition.</span><button class="text-button" type="button" id="refineImagePromptButton">✧ Refine with AI</button></div>
+
+              <div class="field-block">
+                <div class="field-title-row"><label class="field-label">Style tags</label><span class="optional-label">OPTIONAL</span></div>
+                <div class="style-tags" id="styleTags">
+                  <button type="button" class="style-tag" data-style="cinematic lighting">Cinematic</button>
+                  <button type="button" class="style-tag" data-style="photorealistic">Photoreal</button>
+                  <button type="button" class="style-tag" data-style="anime illustration">Anime</button>
+                  <button type="button" class="style-tag" data-style="editorial design">Editorial</button>
+                  <button type="button" class="style-tag" data-style="analog film grain">Analog film</button>
+                  <button type="button" class="style-tag" data-style="dreamlike surrealism">Surreal</button>
+                  <button type="button" class="style-tag" data-style="3D render, high detail">3D render</button>
+                  <button type="button" class="style-tag" data-style="minimalist composition">Minimal</button>
+                </div>
+              </div>
+
+              <div class="field-block">
+                <div class="field-title-row"><label class="field-label" for="imageModelSelect">Image model</label><button type="button" class="text-button" id="refreshImageModels">↻ Refresh</button></div>
+                <select id="imageModelSelect" class="form-control">
+                  <option value="bytedance-seed/seedream-4.5">bytedance-seed/seedream-4.5</option>
+                </select>
+                <p class="field-help">Available models and controls can change. Check model pricing before generating.</p>
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="imageTask">Creation mode</label>
+                <select id="imageTask" class="form-control">
+                  <option value="generate">Generate a new image</option>
+                  <option value="enhance">Enhance / upscale a reference</option>
+                  <option value="restyle">Restyle a reference image</option>
+                  <option value="variation">Create a variation</option>
+                </select>
+                <p class="field-help">Enhancement and restyling depend on your chosen model supporting reference-image input.</p>
+              </div>
+
+              <div class="settings-two-col field-block">
+                <div><label class="field-label" for="imageDimensions">Canvas dimensions</label><select id="imageDimensions" class="form-control"><option value="1:1|1K">Square · 1024 × 1024</option><option value="3:2|1K">Landscape · 1536 × 1024</option><option value="2:3|1K">Portrait · 1024 × 1536</option><option value="16:9|1K">Widescreen · 1536 × 864</option><option value="9:16|1K">Vertical · 864 × 1536</option><option value="1:1|2K">Square · 2K (if supported)</option><option value="16:9|2K">Widescreen · 2K (if supported)</option><option value="9:16|2K">Vertical · 2K (if supported)</option></select></div>
+                <div><label class="field-label" for="imageOutputs">Variations</label><select id="imageOutputs" class="form-control"><option value="1">1 image</option><option value="2">2 images</option><option value="3">3 images</option><option value="4">4 images</option></select></div>
+              </div>
+
+              <div class="field-block reference-block">
+                <div class="field-title-row"><label class="field-label" for="referenceInput">Reference image</label><span class="optional-label">OPTIONAL</span></div>
+                <label class="reference-drop" for="referenceInput" id="referenceDrop"><span class="reference-plus">＋</span><span><strong>Add a reference image</strong><small>Use a compatible image model to restyle or vary it.</small></span><span class="reference-choose">Browse</span></label>
+                <input id="referenceInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                <div id="referencePreview" class="reference-preview" hidden></div>
+              </div>
+
+              <button class="generate-button" type="submit" id="generateButton"><span>✧</span> Generate image <span class="generate-arrow">↗</span></button>
+              <p class="cost-note"><span>ⓘ</span> Image requests go to OpenRouter. Image models may cost money; the app does not add a markup.</p>
+            </form>
+
+            <div class="studio-result panel" id="studioResultPanel">
+              <div class="panel-heading result-heading"><div><span class="panel-kicker">02 / CANVAS</span><h2>Your creations</h2></div><span class="result-count" id="resultCount">0 images</span></div>
+              <div class="generation-status" id="generationStatus" hidden><span class="loading-orbit"></span><div><strong>Creating your image</strong><span>Waiting on the selected model…</span></div></div>
+              <div class="image-results" id="imageResults">
+                <div class="empty-canvas" id="emptyCanvas"><div class="empty-canvas-art"><span class="canvas-star star-one">✦</span><span class="canvas-star star-two">✧</span><div class="canvas-mountain mountain-back"></div><div class="canvas-mountain mountain-front"></div><div class="canvas-sun"></div></div><strong>Your canvas is waiting.</strong><span>Your generated images will appear here.<br />They stay in this browser until you clear them.</span></div>
+              </div>
+              <div class="result-footer"><span><span class="status-light"></span> Saved in this session only</span><button class="text-button" type="button" id="clearImagesButton">Clear canvas</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view settings-view" id="settingsView" aria-label="Settings" hidden>
+        <div class="settings-page-heading"><div class="settings-icon">⚙</div><div><p class="eyebrow">YOUR WORKSPACE</p><h1>Settings & <span>privacy</span></h1><p>Choose where your AI requests go. Yuko has no backend of its own.</p></div></div>
+        <div class="settings-layout">
+          <div class="settings-main">
+            <section class="settings-card panel">
+              <div class="settings-card-heading"><div class="settings-card-icon">⌘</div><div><h2>AI connection</h2><p>Connect to a local model or use your OpenRouter key.</p></div></div>
+              <div class="provider-options" role="group" aria-label="AI provider">
+                <button class="provider-option active" type="button" data-provider="ollama" id="chooseOllama"><span class="provider-option-mark local-mark">◉</span><span><strong>Ollama</strong><small>Local on your device</small></span><span class="radio-indicator"></span></button>
+                <button class="provider-option" type="button" data-provider="openrouter" id="chooseOpenRouter"><span class="provider-option-mark cloud-mark">✳</span><span><strong>OpenRouter</strong><small>Use an API key</small></span><span class="radio-indicator"></span></button>
+              </div>
+              <div id="ollamaSettings" class="provider-settings">
+                <label class="field-label" for="ollamaEndpoint">Ollama API endpoint</label>
+                <div class="input-with-action"><input type="url" id="ollamaEndpoint" class="form-control" value="http://localhost:11434" placeholder="http://localhost:11434" autocapitalize="off" spellcheck="false"/><button type="button" class="button-secondary" id="testOllamaButton">Test connection</button></div>
+                <p class="field-help">Default for a local Ollama install. The browser talks directly to this address.</p>
+                <label class="field-label separated-label" for="ollamaDefaultModel">Default chat model</label>
+                <div class="input-with-action"><select id="ollamaDefaultModel" class="form-control"><option value="llama3.2">llama3.2</option></select><button type="button" class="button-secondary" id="refreshOllamaModels">Load models</button></div>
+                <p class="field-help">Download models in Ollama first. Image understanding requires a vision-capable model.</p>
+              </div>
+              <div id="openRouterSettings" class="provider-settings" hidden>
+                <label class="field-label" for="openRouterKey">OpenRouter API key</label>
+                <div class="input-with-action"><input type="password" id="openRouterKey" class="form-control" placeholder="sk-or-v1-…" autocomplete="off" autocapitalize="off" spellcheck="false"/><button type="button" class="button-secondary" id="toggleKeyVisibility">Show</button></div>
+                <p class="field-help">Stored only in this browser’s local storage. Never commit this key to GitHub or share this browser profile.</p>
+                <div class="input-with-action settings-gap"><div class="field-grow"><label class="field-label" for="openRouterDefaultModel">Default chat model</label><select id="openRouterDefaultModel" class="form-control"><option value="openrouter/free">openrouter/free</option></select></div><button type="button" class="button-secondary align-bottom" id="refreshOpenRouterModels">Load models</button></div>
+                <p class="field-help">OpenRouter offers some free chat models, but availability and rate limits vary. Image generation may require prepaid credits.</p>
+              </div>
+              <div class="connection-feedback" id="connectionFeedback" role="status" hidden></div>
+              <div class="settings-save-row"><span class="save-status" id="saveStatus">Changes save in this browser.</span><button type="button" class="button-primary" id="saveSettingsButton">Save settings <span>→</span></button></div>
+            </section>
+
+            <section class="settings-card panel">
+              <div class="settings-card-heading"><div class="settings-card-icon violet-card-icon">⬡</div><div><h2>Privacy controls</h2><p>Know what is stored, and what gets sent.</p></div></div>
+              <div class="privacy-setting-row"><div><strong>Local chat history</strong><p>Store conversation text in browser local storage.</p></div><span class="setting-enabled"><span></span> On</span></div>
+              <div class="privacy-setting-row"><div><strong>AI requests</strong><p>Sent only when you submit a message or generate an image, directly to your selected provider.</p></div><span class="setting-enabled"><span></span> Direct</span></div>
+              <div class="privacy-setting-row"><div><strong>Analytics & tracking</strong><p>No analytics, ads, accounts, or telemetry are included in Yuko.ai.</p></div><span class="setting-disabled">None</span></div>
+              <div class="privacy-actions"><button type="button" class="button-secondary" id="exportDataButton">Export local data</button><button type="button" class="button-danger" id="deleteDataButton">Delete all local data</button></div>
+            </section>
+          </div>
+          <aside class="settings-aside">
+            <div class="privacy-summary panel"><div class="privacy-summary-shield">⬡</div><h3>Privacy by design.</h3><p>Yuko.ai runs in your browser. There is no Yuko server receiving your prompts or holding your chat logs.</p><div class="privacy-summary-line"><span>Chat history</span><strong>Browser only</strong></div><div class="privacy-summary-line"><span>API key</span><strong>Browser only</strong></div><div class="privacy-summary-line"><span>Requests</span><strong>Your endpoint</strong></div></div>
+            <div class="help-card"><span class="help-icon">ⓘ</span><div><strong>First time with Ollama?</strong><p>Start Ollama, download a model, and allow your app’s origin in Ollama’s CORS settings if the browser blocks the connection.</p><a href="https://ollama.com/download" target="_blank" rel="noreferrer">Get Ollama ↗</a></div></div>
+            <div class="help-card"><span class="help-icon">✳</span><div><strong>Using OpenRouter?</strong><p>Your key authorizes API requests. Free chat models are not the same as free image generation.</p><a href="https://openrouter.ai/settings/keys" target="_blank" rel="noreferrer">Manage keys ↗</a></div></div>
+          </aside>
+        </div>
+      </section>
+
+      <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "Yuko.ai — Private AI Workspace",
+  "short_name": "Yuko.ai",
+  "description": "Privacy-first chat and image studio that connects directly to your chosen AI provider.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0c10",
+  "theme_color": "#0b0c10",
+  "icons": [{ "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
