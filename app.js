@@ -226,7 +226,21 @@
     $('corePromptInput').value = state.settings.corePrompt || DEFAULT_CORE_PROMPT;
     $('trustedContactsInput').value = state.settings.trustedContacts || '';
     $('parentalControlsToggle').checked = Boolean(state.settings.parentalControls);
+    updateParentalSafetyStatus();
     applyProviderUI();
+  }
+
+  function updateParentalSafetyStatus() {
+    const input = $('parentalControlsToggle');
+    if (!input) return;
+    const enabled = Boolean(input.checked);
+    input.setAttribute('aria-checked', String(enabled));
+    const status = $('parentalSafetyStatus');
+    if (status) {
+      status.textContent = enabled ? 'ON' : 'OFF';
+      status.classList.toggle('is-on', enabled);
+      status.classList.toggle('is-off', !enabled);
+    }
   }
 
   function readSettingsForm() {
@@ -569,7 +583,7 @@
   async function getProviderCompletion(chatMessages, model, ephemeralPrompt = null) {
     const provider = currentProvider();
     const contacts = String(state.settings.trustedContacts || '').trim();
-    const guard = state.settings.parentalControls ? '\n\nPrompt-level parental controls are enabled. For restricted content reply: This action is restricted by active Parental Controls.' : '';
+    const guard = state.settings.parentalControls ? '\n\nPARENTAL SAFETY IS ON. Refuse explicit sexual content, graphic violence, and age-inappropriate requests. For such requests, briefly reply: This action is restricted by active Parental Controls.' : '';
     const contactsNote = contacts ? '\n\nUser-entered trusted contacts (not independently verified):\n' + contacts + '\nThis app has no outbound messaging integration; do not claim to contact anyone.' : '\n\nNo trusted contacts are configured.';
     const systemMessage = { role: 'system', content: String(state.settings.corePrompt || DEFAULT_CORE_PROMPT) + guard + contactsNote + '\n\nCapability limit: there is no remote execution sandbox. Do not claim generated code was run or tested.' };
     if (provider === 'ollama') {
@@ -983,7 +997,12 @@
       }
       persistSettings();
     });
-    $('saveSettingsButton').addEventListener('click', () => { readSettingsForm(); toast('Settings saved in this browser.'); });
+    $('saveSettingsButton').addEventListener('click', () => { readSettingsForm(); updateParentalSafetyStatus(); toast('Settings saved in this browser.'); });
+    $('parentalControlsToggle').addEventListener('change', () => {
+      readSettingsForm();
+      updateParentalSafetyStatus();
+      toast(state.settings.parentalControls ? 'Parental safety ON — saved in this browser.' : 'Parental safety OFF — saved in this browser.');
+    });
     $('toggleKeyVisibility').addEventListener('click', () => {
       const input = $('openRouterKey');
       input.type = input.type === 'password' ? 'text' : 'password';
